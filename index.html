@@ -48,7 +48,6 @@
       color: #800000;
     }
     .status-opt.active { background: #800000; color: white; border-color: #800000; }
-
     #previewBox {
       width: 100%;
       aspect-ratio: 3/4;
@@ -70,7 +69,6 @@
     #btnUlang { display: none; background: #555; margin-top: 8px; }
     #gpsStatus { font-size: 12px; text-align: center; margin-top: 6px; min-height: 18px; color: #555; }
     #msg { text-align: center; margin-top: 10px; font-weight: bold; }
-
     #loadingOverlay {
       display: none;
       position: fixed; inset: 0;
@@ -93,7 +91,6 @@
       margin-bottom: 14px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .table-res { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
     .table-res th, .table-res td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     .table-res tfoot td { font-weight: bold; background: #fff5f5; }
@@ -101,13 +98,11 @@
 </head>
 <body>
 
-<!-- Loading overlay saat kirim data -->
 <div id="loadingOverlay">
   <div class="spinner"></div>
   <div id="loadingText">Mengirim data...</div>
 </div>
 
-<!-- KARTU ABSENSI -->
 <div class="card">
   <h2 style="text-align:center;color:#800000;margin:0 0 5px;">AB ABSENSI</h2>
 
@@ -124,12 +119,6 @@
     <label class="status-opt"        id="optPulang" onclick="pilihStatus('PULANG')">&#127968; PULANG</label>
   </div>
 
-  <!--
-    Kunci solusi:
-    - Halaman ini di-host di GitHub Pages (bukan Google Apps Script iframe)
-    - input[capture="user"] berjalan di tab browser penuh = tidak crash di Android 12
-    - Backend tetap Apps Script yang sama via fetch() API
-  -->
   <input type="file" id="inputKamera" accept="image/*" capture="user" style="display:none">
 
   <div id="previewBox" onclick="bukaKamera()">
@@ -142,13 +131,11 @@
   </div>
 
   <button id="btnUlang" onclick="resetFoto()">&#8634; ULANGI FOTO</button>
-
   <div id="gpsStatus">&#128225; Menunggu GPS...</div>
   <button id="btnKirim" onclick="submitAbsensi()">KIRIM ABSENSI</button>
   <div id="msg"></div>
 </div>
 
-<!-- KARTU LAPORAN -->
 <div class="card">
   <h3 style="text-align:center;margin:0 0 5px;">&#128202; REKAP LAPORAN NBM</h3>
   <div class="date-row">
@@ -166,8 +153,6 @@
 </div>
 
 <script>
-// ================================================================
-// GANTI URL INI dengan URL Apps Script Anda setelah deploy ulang
 // ================================================================
 var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtmpwijI0kj8dDQRkorq16hT_gGVnPtiaOXI4AsWOYmMfnhyxtCYOxTEDLQ_dPV-NJQw/exec";
 // ================================================================
@@ -188,7 +173,7 @@ var btnUlang    = document.getElementById('btnUlang');
 
 /* ── Init ───────────────────────────────────────────────────── */
 window.onload = function () {
-  apiFetch({ action: "getListOutlet" }, function (outlets) {
+  jsonpFetch({ action: "getListOutlet" }, function (outlets) {
     outSelect.innerHTML = '<option value="">&#128205; Pilih Lokasi Outlet</option>';
     outlets.forEach(function (o) {
       var opt = document.createElement('option');
@@ -204,29 +189,43 @@ window.onload = function () {
   ambilGPSBackground();
 };
 
-/* ── API fetch ke Apps Script ───────────────────────────────── */
-// Semua komunikasi ke backend lewat sini
-function apiFetch(params, onSuccess, onError) {
-  var url = APPS_SCRIPT_URL + "?" + Object.keys(params).map(function(k) {
-    return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]);
-  }).join("&");
+/* ── JSONP — bypass CORS untuk GET request ──────────────────── */
+var jsonpCallbackCounter = 0;
+function jsonpFetch(params, onSuccess, onError) {
+  var cbName = '__jsonpCb' + (++jsonpCallbackCounter);
+  params.callback = cbName;
 
-  fetch(url, { redirect: "follow" })
-    .then(function (r) { return r.json(); })
-    .then(function (data) { if (onSuccess) onSuccess(data); })
-    .catch(function (e) { if (onError) onError(e); else console.error(e); });
+  var url = APPS_SCRIPT_URL + '?' + Object.keys(params).map(function(k) {
+    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  }).join('&');
+
+  window[cbName] = function(data) {
+    delete window[cbName];
+    document.head.removeChild(script);
+    if (onSuccess) onSuccess(data);
+  };
+
+  var script = document.createElement('script');
+  script.src = url;
+  script.onerror = function() {
+    delete window[cbName];
+    document.head.removeChild(script);
+    if (onError) onError(new Error('JSONP gagal'));
+  };
+  document.head.appendChild(script);
 }
 
+/* ── POST — kirim absensi ───────────────────────────────────── */
 function apiPost(payload, onSuccess, onError) {
   fetch(APPS_SCRIPT_URL, {
     method: "POST",
     redirect: "follow",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "text/plain" }, // text/plain bypass CORS preflight
     body: JSON.stringify(payload)
   })
     .then(function (r) { return r.json(); })
     .then(function (data) { if (onSuccess) onSuccess(data); })
-    .catch(function (e) { if (onError) onError(e); else console.error(e); });
+    .catch(function (e) { if (onError) onError(e); });
 }
 
 /* ── Status & Staff ─────────────────────────────────────────── */
@@ -240,7 +239,7 @@ function updateStaff() {
   var outlet = outSelect.value;
   if (!outlet) return;
   namaSelect.innerHTML = '<option>Memuat...</option>';
-  apiFetch({ action: "getStaffByOutlet", outlet: outlet }, function (names) {
+  jsonpFetch({ action: "getStaffByOutlet", outlet: outlet }, function (names) {
     namaSelect.innerHTML = '<option value="">&#128100; Pilih Nama</option>';
     names.forEach(function (n) {
       var opt = document.createElement('option');
@@ -442,7 +441,7 @@ function buatLaporan() {
   if (t1 > t2)    return Swal.fire("Perhatian", "Tanggal mulai harus sebelum selesai!", "warning");
 
   document.getElementById('hasilLaporan').innerHTML = "<p style='text-align:center;color:#888;'>Memuat...</p>";
-  apiFetch({ action: "getLaporanData", tglMulai: t1, tglSelesai: t2, filterOutlet: f }, function (res) {
+  jsonpFetch({ action: "getLaporanData", tglMulai: t1, tglSelesai: t2, filterOutlet: f }, function (res) {
     if (typeof res === 'string') {
       document.getElementById('hasilLaporan').innerHTML = "<p style='color:red;'>" + res + "</p>"; return;
     }

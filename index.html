@@ -46,7 +46,7 @@
       text-align: center;
       position: relative;
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 0;
     }
     .site-header::before {
       content: '';
@@ -92,6 +92,50 @@
       margin-top: 3px;
     }
 
+    /* ── Tab Bar ── */
+    .tab-bar {
+      width: 100%;
+      background: var(--maroon-d);
+      display: flex;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.18);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 13px 10px 11px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-bottom: 3px solid transparent;
+      transition: all .22s;
+      text-transform: uppercase;
+    }
+    .tab-btn.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+      background: rgba(255,215,0,0.06);
+    }
+    .tab-btn:hover:not(.active) {
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.05);
+    }
+    .tab-icon { font-size: 16px; }
+
+    /* ── Tab Pages ── */
+    .tab-page { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .tab-page.active { display: flex; }
+
     /* ── Cards ── */
     .card {
       background: var(--surface);
@@ -100,11 +144,9 @@
       width: calc(100% - 28px);
       max-width: 420px;
       padding: 22px 20px;
-      margin-bottom: 16px;
+      margin-top: 18px;
       animation: slideUp 0.45s cubic-bezier(.22,.68,0,1.2) both;
     }
-    .card:nth-child(2) { animation-delay: 0.08s; }
-    .card:nth-child(3) { animation-delay: 0.16s; }
     @keyframes slideUp {
       from { opacity:0; transform: translateY(28px); }
       to   { opacity:1; transform: translateY(0);    }
@@ -263,6 +305,13 @@
       margin-bottom: 10px;
     }
     .btn-secondary:hover { background: #e6e0e0; }
+    .btn-dark {
+      background: #3a3a3a;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    }
+    .btn-dark:hover { background: #2a2a2a; transform: translateY(-1px); }
+    .btn-dark:active { transform: translateY(0); }
 
     /* ── GPS Status ── */
     #gpsStatus {
@@ -325,7 +374,7 @@
       margin-top: 4px;
     }
 
-    /* ── Table ── */
+    /* ── Laporan Table ── */
     .table-wrap { overflow-x: auto; margin-top: 14px; border-radius: var(--radius-sm); }
     .table-res {
       width: 100%;
@@ -355,14 +404,52 @@
       background: #fff0f0;
       border-top: 2px solid #e8c0c0;
     }
-    #hasilLaporan:empty::before {
-      content: 'Pilih rentang tanggal lalu klik Tampilkan Rekap';
-      display: block;
+
+    /* ── Laporan Info Banner ── */
+    .laporan-empty {
       text-align: center;
+      padding: 28px 20px;
       color: var(--muted);
-      font-size: 12px;
-      padding: 10px 0 2px;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
     }
+    .laporan-empty-icon {
+      font-size: 36px;
+      margin-bottom: 4px;
+    }
+
+    /* ── Summary Stats ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat-card {
+      background: #fdf5f5;
+      border: 1px solid #f0dada;
+      border-radius: var(--radius-sm);
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #b07070;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--maroon);
+      line-height: 1;
+    }
+    .stat-value.small { font-size: 14px; margin-top: 2px; }
 
     /* ── SweetAlert custom ── */
     .swal2-popup { border-radius: 20px !important; font-family: 'Outfit', sans-serif !important; }
@@ -388,89 +475,125 @@
   <div class="header-sub">by : Awal Bermula Cafe</div>
 </div>
 
-<!-- Form Absensi -->
-<div class="card">
-  <div class="section-label">Form Kehadiran</div>
-
-  <div class="field">
-    <label>Lokasi Outlet</label>
-    <select id="pilihOutlet" onchange="updateStaff()">
-      <option value="">📍 Pilih Lokasi Outlet</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Nama Staff</label>
-    <select id="namaStaff">
-      <option value="">👤 Pilih Nama</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Status Kehadiran</label>
-    <div class="status-container">
-      <label class="status-opt active" id="optHadir" onclick="pilihStatus('HADIR')">
-        <span class="icon">✅</span>HADIR
-      </label>
-      <label class="status-opt" id="optPulang" onclick="pilihStatus('PULANG')">
-        <span class="icon">🏠</span>PULANG
-      </label>
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Foto Selfie</label>
-    <input type="file" id="inputKamera" accept="image/*" capture="user" style="display:none">
-    <div id="previewBox" onclick="bukaKamera()">
-      <img id="imgPreview" alt="preview">
-      <div class="preview-inner" id="previewText">
-        <div class="cam-icon">📷</div>
-        <div class="preview-title">KETUK UNTUK FOTO</div>
-        <div class="preview-sub">Tampilkan Wajah & Background</div>
-      </div>
-    </div>
-    <button class="btn btn-secondary" id="btnUlang" onclick="resetFoto()" style="display:none;">
-      🔄 Ulangi Foto
-    </button>
-  </div>
-
-  <div id="gpsStatus">📡 Menunggu GPS...</div>
-
-  <button class="btn btn-primary" id="btnKirim" onclick="submitAbsensi()">
-    <span>Kirim Absensi</span> <span>→</span>
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabAbsensiBtn" onclick="switchTab('absensi')">
+    <span class="tab-icon">📋</span> Absensi
+  </button>
+  <button class="tab-btn" id="tabLaporanBtn" onclick="switchTab('laporan')">
+    <span class="tab-icon">📊</span> Rekap NBM
   </button>
 </div>
 
-<!-- Laporan -->
-<div class="card">
-  <div class="section-label">Rekap Laporan NBM</div>
+<!-- ══════════════════════════════════
+     TAB 1 — FORM ABSENSI
+══════════════════════════════════ -->
+<div class="tab-page active" id="tabAbsensi">
+  <div class="card">
+    <div class="section-label">Form Kehadiran</div>
 
-  <div class="date-row" style="margin-bottom:12px;">
-    <div class="field" style="margin:0;">
-      <label>Mulai</label>
-      <input type="date" id="tglMulai">
+    <div class="field">
+      <label>Lokasi Outlet</label>
+      <select id="pilihOutlet" onchange="updateStaff()">
+        <option value="">📍 Pilih Lokasi Outlet</option>
+      </select>
     </div>
-    <div class="field" style="margin:0;">
-      <label>Sampai</label>
-      <input type="date" id="tglSelesai">
+
+    <div class="field">
+      <label>Nama Staff</label>
+      <select id="namaStaff">
+        <option value="">👤 Pilih Nama</option>
+      </select>
     </div>
+
+    <div class="field">
+      <label>Status Kehadiran</label>
+      <div class="status-container">
+        <label class="status-opt active" id="optHadir" onclick="pilihStatus('HADIR')">
+          <span class="icon">✅</span>HADIR
+        </label>
+        <label class="status-opt" id="optPulang" onclick="pilihStatus('PULANG')">
+          <span class="icon">🏠</span>PULANG
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Foto Selfie</label>
+      <input type="file" id="inputKamera" accept="image/*" capture="user" style="display:none">
+      <div id="previewBox" onclick="bukaKamera()">
+        <img id="imgPreview" alt="preview">
+        <div class="preview-inner" id="previewText">
+          <div class="cam-icon">📷</div>
+          <div class="preview-title">KETUK UNTUK FOTO</div>
+          <div class="preview-sub">Tampilkan Wajah & Background</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" id="btnUlang" onclick="resetFoto()" style="display:none;">
+        🔄 Ulangi Foto
+      </button>
+    </div>
+
+    <div id="gpsStatus">📡 Menunggu GPS...</div>
+
+    <button class="btn btn-primary" id="btnKirim" onclick="submitAbsensi()">
+      <span>Kirim Absensi</span> <span>→</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     TAB 2 — REKAP LAPORAN NBM
+══════════════════════════════════ -->
+<div class="tab-page" id="tabLaporan">
+  <div class="card">
+    <div class="section-label">Filter Laporan</div>
+
+    <div class="date-row" style="margin-bottom:12px;">
+      <div class="field" style="margin:0;">
+        <label>Mulai</label>
+        <input type="date" id="tglMulai">
+      </div>
+      <div class="field" style="margin:0;">
+        <label>Sampai</label>
+        <input type="date" id="tglSelesai">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Filter Outlet</label>
+      <select id="filterOutletLaporan">
+        <option value="">🏪 Semua Outlet</option>
+        <option value="Central Kitchen">Central Kitchen</option>
+        <option value="Serpong">Serpong</option>
+        <option value="Sentul">Sentul</option>
+      </select>
+    </div>
+
+    <button class="btn btn-dark" onclick="buatLaporan()">
+      📊 Tampilkan Rekap
+    </button>
   </div>
 
-  <div class="field">
-    <label>Filter Outlet</label>
-    <select id="filterOutletLaporan">
-      <option value="">🏪 Semua Outlet</option>
-      <option value="Central Kitchen">Central Kitchen</option>
-      <option value="Serpong">Serpong</option>
-      <option value="Sentul">Sentul</option>
-    </select>
+  <!-- Result Card -->
+  <div class="card" id="hasilCard" style="display:none;">
+    <div class="section-label">Rekap NBM</div>
+
+    <!-- Summary Stats -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- Table -->
+    <div id="hasilLaporan" class="table-wrap"></div>
   </div>
 
-  <button class="btn btn-primary" onclick="buatLaporan()" style="background:#3a3a3a;box-shadow:0 4px 16px rgba(0,0,0,0.18);">
-    📊 Tampilkan Rekap
-  </button>
-
-  <div id="hasilLaporan" class="table-wrap"></div>
+  <!-- Empty State -->
+  <div class="card" id="emptyCard">
+    <div class="laporan-empty">
+      <div class="laporan-empty-icon">📂</div>
+      <strong style="color:#555;">Belum ada data ditampilkan</strong>
+      <span>Pilih rentang tanggal & outlet, lalu klik <b>Tampilkan Rekap</b></span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -491,6 +614,14 @@ var imgPreview  = document.getElementById('imgPreview');
 var previewText = document.getElementById('previewText');
 var btnUlang    = document.getElementById('btnUlang');
 
+/* ── Tab Switch ── */
+function switchTab(tab) {
+  document.getElementById('tabAbsensi').classList.toggle('active', tab === 'absensi');
+  document.getElementById('tabLaporan').classList.toggle('active', tab === 'laporan');
+  document.getElementById('tabAbsensiBtn').classList.toggle('active', tab === 'absensi');
+  document.getElementById('tabLaporanBtn').classList.toggle('active', tab === 'laporan');
+}
+
 /* ── Init ── */
 window.onload = function () {
   jsonpFetch({ action: "getListOutlet" }, function (outlets) {
@@ -503,6 +634,13 @@ window.onload = function () {
   });
   document.getElementById('inputKamera').addEventListener('change', function () { handleFile(this); });
   ambilGPSBackground();
+
+  // Set default date range = current month
+  var now = new Date();
+  var y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+  var lastDay = new Date(y, now.getMonth()+1, 0).getDate();
+  document.getElementById('tglMulai').value  = y + '-' + m + '-01';
+  document.getElementById('tglSelesai').value = y + '-' + m + '-' + lastDay;
 };
 
 /* ── JSONP ── */
@@ -665,11 +803,11 @@ function simpanKoordinat(pos) {
   gpsStatus.textContent = '✅ GPS terkunci (±' + Math.round(pos.coords.accuracy) + 'm)';
 }
 
-/* ── Submit ── */
+/* ── Submit Absensi ── */
 function submitAbsensi() {
   var nama   = namaSelect.value;
   var outlet = outSelect.value;
-  if (!outlet)     return Swal.fire({ title:"Perhatian", text:"Pilih lokasi outlet!", icon:"warning", confirmButtonColor:"#800000", borderRadius:"20px" });
+  if (!outlet)     return Swal.fire({ title:"Perhatian", text:"Pilih lokasi outlet!", icon:"warning", confirmButtonColor:"#800000" });
   if (!nama)       return Swal.fire({ title:"Perhatian", text:"Pilih nama staff!", icon:"warning", confirmButtonColor:"#800000" });
   if (!base64Foto) return Swal.fire({ title:"Perhatian", text:"Ambil foto selfie terlebih dahulu!", icon:"warning", confirmButtonColor:"#800000" });
   if (gpsLoading)  return Swal.fire({ title:"Harap Tunggu", text:"GPS sedang mengunci lokasi.", icon:"info", confirmButtonColor:"#800000" });
@@ -732,21 +870,51 @@ function buatLaporan() {
   var f  = document.getElementById('filterOutletLaporan').value;
   if (!t1 || !t2) return Swal.fire({ title:"Perhatian", text:"Isi tanggal mulai dan selesai!", icon:"warning", confirmButtonColor:"#800000" });
   if (t1 > t2)    return Swal.fire({ title:"Perhatian", text:"Tanggal mulai harus sebelum selesai!", icon:"warning", confirmButtonColor:"#800000" });
-  document.getElementById('hasilLaporan').innerHTML = "<p style='text-align:center;color:#aaa;padding:14px 0;font-size:13px;'>⏳ Memuat data...</p>";
+
+  document.getElementById('hasilCard').style.display = 'none';
+  document.getElementById('emptyCard').style.display = 'block';
+  document.getElementById('emptyCard').querySelector('.laporan-empty').innerHTML =
+    '<div class="laporan-empty-icon">⏳</div><span style="color:#aaa;font-size:13px;">Memuat data rekap...</span>';
+
   jsonpFetch({ action:"getLaporanData", tglMulai:t1, tglSelesai:t2, filterOutlet:f }, function (res) {
     if (typeof res === 'string') {
-      document.getElementById('hasilLaporan').innerHTML = "<p style='color:red;padding:10px;font-size:13px;'>" + res + "</p>"; return;
+      document.getElementById('emptyCard').querySelector('.laporan-empty').innerHTML =
+        '<div class="laporan-empty-icon">⚠️</div><span style="color:red;font-size:13px;">' + res + '</span>';
+      return;
     }
+
     var rekap = res.rekap, keys = Object.keys(rekap);
+
     if (keys.length === 0) {
-      document.getElementById('hasilLaporan').innerHTML = "<p style='text-align:center;color:#aaa;padding:14px 0;font-size:13px;'>Tidak ada data pada periode ini.</p>"; return;
+      document.getElementById('emptyCard').style.display = 'block';
+      document.getElementById('emptyCard').querySelector('.laporan-empty').innerHTML =
+        '<div class="laporan-empty-icon">📂</div><strong style="color:#555;">Tidak ada data</strong><span>Periode ini tidak memiliki catatan absensi.</span>';
+      return;
     }
-    var h = "<table class='table-res'><thead><tr><th>Nama</th><th>Hadir</th><th>NBM (Rp)</th></tr></thead><tbody>";
-    keys.forEach(function (n) {
-      h += "<tr><td style='text-align:left;'>" + n + "</td><td>" + rekap[n].masuk + "</td><td>" + rekap[n].nbm.toLocaleString('id-ID') + "</td></tr>";
+
+    // Build stats
+    var totalHadir = 0;
+    keys.forEach(function(n){ totalHadir += rekap[n].masuk; });
+    var outletLabel = f || 'Semua Outlet';
+    var statsHTML =
+      '<div class="stat-card"><div class="stat-label">Total Staff</div><div class="stat-value">' + keys.length + '</div></div>' +
+      '<div class="stat-card"><div class="stat-label">Total Hadir</div><div class="stat-value">' + totalHadir + '</div></div>' +
+      '<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">Total NBM</div><div class="stat-value small">Rp ' + res.totalNBMAll.toLocaleString('id-ID') + '</div></div>';
+    document.getElementById('statsRow').innerHTML = statsHTML;
+
+    // Build table
+    var h = "<table class='table-res'><thead><tr><th>#</th><th style='text-align:left;'>Nama</th><th>Hadir</th><th>NBM (Rp)</th></tr></thead><tbody>";
+    keys.forEach(function (n, i) {
+      h += "<tr><td style='color:#bbb;font-size:11px;'>" + (i+1) + "</td><td style='text-align:left;'>" + n + "</td><td>" + rekap[n].masuk + "</td><td>" + rekap[n].nbm.toLocaleString('id-ID') + "</td></tr>";
     });
-    h += "</tbody><tfoot><tr><td colspan='2' style='text-align:right;'>TOTAL</td><td>" + res.totalNBMAll.toLocaleString('id-ID') + "</td></tr></tfoot></table>";
+    h += "</tbody><tfoot><tr><td colspan='3' style='text-align:right;'>TOTAL NBM</td><td>" + res.totalNBMAll.toLocaleString('id-ID') + "</td></tr></tfoot></table>";
     document.getElementById('hasilLaporan').innerHTML = h;
+
+    document.getElementById('emptyCard').style.display = 'none';
+    document.getElementById('hasilCard').style.display = 'block';
+  }, function(err) {
+    document.getElementById('emptyCard').querySelector('.laporan-empty').innerHTML =
+      '<div class="laporan-empty-icon">❌</div><span style="color:red;font-size:13px;">Gagal memuat: ' + err.message + '</span>';
   });
 }
 </script>

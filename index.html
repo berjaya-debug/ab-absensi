@@ -580,7 +580,7 @@
       <div class="preview-inner" id="previewPlaceholder">
         <div class="cam-icon">📸</div>
         <div class="preview-title">Ambil Foto Selfie</div>
-        <div class="preview-sub">Tampilkan Wajah &amp; Background</div>
+        <div class="preview-sub">Pastikan wajah terlihat jelas &amp; pencahayaan cukup</div>
       </div>
     </div>
 
@@ -703,13 +703,89 @@
     if (!input.files || !input.files[0]) return;
     const reader = new FileReader();
     reader.onload = function(e) {
-      photoBase64 = e.target.result;
-      document.getElementById('imgPreview').src = photoBase64;
-      document.getElementById('imgPreview').style.display = 'block';
-      document.getElementById('previewPlaceholder').style.display = 'none';
-      checkReady();
+      const img = new Image();
+      img.onload = function() {
+        // Draw image onto canvas then stamp watermark
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        // --- Watermark data ---
+        const outlet  = document.getElementById('selOutlet').value || '-';
+        const staff   = document.getElementById('selStaff').value  || '-';
+        const now     = new Date();
+        const tgl     = now.toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
+        const jam     = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        const lines   = [
+          '📍 ' + outlet,
+          '👤 ' + staff,
+          '📅 ' + tgl + '  🕐 ' + jam
+        ];
+
+        // Scale font to image size (so it looks good on both small/large photos)
+        const fontSize   = Math.max(22, Math.round(canvas.width * 0.038));
+        const lineHeight = fontSize * 1.55;
+        const padX       = Math.round(canvas.width * 0.03);
+        const padY       = Math.round(canvas.height * 0.022);
+        const boxPad     = Math.round(fontSize * 0.55);
+
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+
+        // Measure widest line
+        const maxW = lines.reduce((m, l) => Math.max(m, ctx.measureText(l).width), 0);
+        const boxW = maxW + boxPad * 2;
+        const boxH = lines.length * lineHeight + boxPad * 1.2;
+        const boxX = padX;
+        const boxY = canvas.height - padY - boxH;
+
+        // Semi-transparent dark box
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        roundRect(ctx, boxX, boxY, boxW, boxH, fontSize * 0.4);
+        ctx.fill();
+
+        // Maroon top border accent on box
+        ctx.strokeStyle = '#CC0000';
+        ctx.lineWidth   = Math.max(3, Math.round(canvas.width * 0.004));
+        roundRect(ctx, boxX, boxY, boxW, boxH, fontSize * 0.4);
+        ctx.stroke();
+
+        // Text lines
+        ctx.fillStyle    = '#FFFFFF';
+        ctx.shadowColor  = 'rgba(0,0,0,0.7)';
+        ctx.shadowBlur   = 4;
+        ctx.textBaseline = 'top';
+        lines.forEach((line, i) => {
+          ctx.fillText(line, boxX + boxPad, boxY + boxPad * 0.6 + i * lineHeight);
+        });
+        ctx.shadowBlur = 0;
+
+        // Export with watermark
+        photoBase64 = canvas.toDataURL('image/jpeg', 0.88);
+        document.getElementById('imgPreview').src = photoBase64;
+        document.getElementById('imgPreview').style.display = 'block';
+        document.getElementById('previewPlaceholder').style.display = 'none';
+        checkReady();
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(input.files[0]);
+  }
+
+  // Helper: rounded rectangle path
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y,     x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h,     x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y,         x + r, y);
+    ctx.closePath();
   }
 
   function checkReady() {

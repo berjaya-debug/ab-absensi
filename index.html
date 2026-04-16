@@ -7,6 +7,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Dancing+Script:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Link ke manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Theme color browser (warna status bar di Android) -->
+  <meta name="theme-color" content="#8B0000">
+  
+  <!-- iOS Safari — PWA tidak pakai manifest, butuh meta tag sendiri -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ABAbsensi">
+  <link rel="apple-touch-icon" href="ababsen.png">
+  
+  <!-- Fallback icon untuk browser lama -->
+  <link rel="icon" type="image/png" sizes="192x192" href="ababsen.png">
+  
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root {
@@ -828,6 +843,18 @@
     const today    = now.toISOString().split('T')[0];
     document.getElementById('tglMulai').value   = firstDay;
     document.getElementById('tglSelesai').value = today;
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(function (reg) {
+          console.log('SW terdaftar:', reg.scope);
+        })
+        .catch(function (err) {
+          console.error('SW gagal:', err);
+        });
+    });
   }
 </script>
 

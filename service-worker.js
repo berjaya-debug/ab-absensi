@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ab-absen-v1';
+const CACHE_NAME = 'ab-absen-v2';
 const urlsToCache = [
   '/',
   'index.html',
